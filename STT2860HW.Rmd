@@ -1,0 +1,113 @@
+---
+title: Regression Homework
+author: Andrew Vandenberg
+date: April 24, 2021
+output:
+  prettydoc::html_pretty:
+    toc: true
+    theme: cayman
+    highlight: github
+    math: katex
+    number_sections: true
+---
+
+# Import the `mlbattendance2015` data set from project 2 into R.
+
+```{r message =FALSE}
+library(tidyverse)
+library(readxl)
+mlb <- read_excel("mlbattendance2015.xlsx")
+```
+
+# Build a regression model to predict average attendance from Winning Percentage (`Winpct`).  Also provide a graphical summary of the relationship.
+
+```{r}
+avg_att <- lm(avgattendance ~ winpct, mlb)
+avg_att
+
+ggplot(avg_att, aes(x = winpct, y = avgattendance)) +
+  geom_point(color = "red") + 
+  geom_smooth(method = "lm") +
+  labs(x = "Win %", y = "Avg Attendance", title = "Win % versus Avg Attendance") +
+  theme_bw()
+  
+summary(avg_att)
+```
+
+# Next, add League as a predictor to the previous model, in a parallel lines model.
+
+```{r}
+mlb$League = factor(mlb$League) 
+
+avg_att2 <- lm(avgattendance ~ winpct + League, mlb)
+avg_att2
+
+ggplot(avg_att2, aes(x = winpct, y = avgattendance, color = League)) +
+  geom_point(color = "red") + 
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw()
+
+summary(avg_att2)
+```
+
+# Finally, add potential interaction between League and Winning Percentage as a predictor, creating a possible non-parallel lines model.
+
+
+```{r}
+avg_att3 <- lm(avgattendance ~ winpct + League + winpct:League, mlb)
+avg_att3
+
+summary(avg_att3)
+```
+
+
+# Provide a graph of the data that incorporates both winning percentage and league as predictors and avg attendance as the response.
+
+```{r}
+ggplot(avg_att2, aes(x = winpct, y = avgattendance, color = League)) +
+  geom_point(color = "red") + 
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_bw()
+  
+```
+
+# Which of the models in (2), (3), and (4) do you think is the best?  Clearly justify your answer.
+
+The model from question 3 (`avg_att2`) is the best model because it has the highest adjusted $R^2$ value (0.25 vs 0.19 (`avg_att`) and 0.23 (`avg_att3`)).
+
+|Model  | Adjusted $R^2$ | 
+|--------|--------------------|
+|`avg_att` | 0.19 | 
+| `avg_att2` | 0.25   | 
+| `avg_att3` | 0.23  | 
+
+
+# Predict average attendance for an American League team with a 60% winning percentage, and for a National League Team with a 50% winning percentage based upon your best model from steps (2), (3), (4).
+
+```{r}
+
+newdata <- tibble(League = c("National"), winpct = c(50))
+newdata2 <- tibble(League = c("American"), winpct = c(60))
+
+National_mod1 <- predict(avg_att, newdata, se.fit = FALSE)
+National_mod2 <- predict(avg_att2, newdata, se.fit = FALSE)
+National_mod3 <- predict(avg_att3, newdata, se.fit = FALSE)
+
+
+American_mod1 <- predict(avg_att, newdata2, se.fit = FALSE)
+American_mod2 <- predict(avg_att2, newdata2, se.fit = FALSE)
+American_mod3 <- predict(avg_att3, newdata2, se.fit = FALSE)
+
+```
+
+-----------------------------------------------------------------------------
+|Model  | Prediction Value | 
+|--------|--------------------|
+|`National_mod1` | 28900.82  | 
+| `National_mod2` | 31376.33   | 
+| `National_mod3` | 31332.66   | 
+|`American_mod1` | 35091.91  | 
+| `American_mod2` | 33032.54    | 
+| `American_mod3` | 34956.55   | 
+
+
